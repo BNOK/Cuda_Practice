@@ -14,7 +14,7 @@ using namespace std;
 
 //cudaError_t addWithCuda(int *c, const int *a, const int *b, unsigned int size);
 
-uchar4* converting(uchar* input, int size);
+uchar4* converting_UCHAR_UCHAR4(uchar* input, int size);
 void DisplayUchar4(uchar4* arr, int size);
 
 __global__ void addKernel(const int *a, const int *b, int *c)
@@ -41,11 +41,14 @@ int main()
     for (int i = 0; i < imageSize; i++) {
         printf("imgData[%d] = %d | ", i, imgData[i]);
     }
+    cout << endl;
 
     cout << " after : " << endl;
     int imageSize_4 = rows * cols;
+
     uchar4* out = (uchar4*)malloc(imageSize_4 * sizeof(uchar4));
-    out = converting(imgData, imageSize_4);
+
+    out = converting_UCHAR_UCHAR4(imgData, imageSize_4);
     DisplayUchar4(out, imageSize_4);
 
 
@@ -167,25 +170,35 @@ int main()
 //    return cudaStatus;
 //}
 
-uchar4* converting(uchar* input,int size) {
-    int index1 = 0;
-    int index4 = 0;
-
-    int byteSize = size * sizeof(uchar4);
-
-    uchar4* output = (uchar4*) malloc(byteSize);
-    memset(output, 'a', byteSize);
+uchar4* converting_UCHAR_UCHAR4(uchar* input ,int size_4) {
+    uchar4* output = (uchar4*)malloc(size_4 * sizeof(uchar4));
+    memset(output, 100, size_4 * sizeof(uchar4));
     
-    for (int i = 0,j=0; j<size/4 ,i < size; i+=3,j++) {
+    for (int i = 0,j=0;j < size_4; i+=4,j++) {
         output[j].x = input[i];
         output[j].y = input[i+1];
         output[j].z = input[i+2];
         output[j].w = input[i+3];
-        
+        cout << "i = " << i << ", j = "<< j << endl;
+    }
+
+    
+    return output;
+}
+
+uchar* converting_UCHAR4_UCHAR(uchar4* input, int size_1) {
+    uchar* output = (uchar*)malloc(size_1 * sizeof(uchar));
+    memset(output, 100, size_1 * sizeof(uchar));
+    
+    for (int i = 0, j = 0; i < size_1; i += 4, j++) {
+        output[j] = input[i].x;
+        output[j+1] = input[i].y;
+        output[j+2] = input[i].z;
+        output[j+3] = input[i].w;
+        cout << "i = " << i << ", j = " << j << endl;
     }
 
     return output;
-
 }
 
 void DisplayUchar4(uchar4* arr,int size) {
