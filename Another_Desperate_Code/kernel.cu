@@ -15,67 +15,74 @@ using namespace std;
 //cudaError_t addWithCuda(int *c, const int *a, const int *b, unsigned int size);
 
 uchar4* converting_UCHAR_UCHAR4(uchar* input, int size);
+
 void DisplayUchar4(uchar4* arr, int size);
+void DisplayUchar(uchar* arr, int size);
 
-__global__ void addKernel(const int *a, const int *b, int *c)
+__global__ void addKernel(uchar4* a, uchar* b)
 { 
+        int threadId = blockIdx.x* blockDim.x* blockDim.y
+                        + threadIdx.y * blockDim.x + threadIdx.x;
 
+        b[threadId] = a[threadId].x + a[threadId].y + a[threadId].z;
 }
 
 int main()
 {
-    //reading image
+    //reading image and getting data 
     string file_path = "C:/Users/Mega-Pc/Desktop/git-project/Cuda_Practice/Another_Desperate_Code/Test_Image.png";
     Mat img = imread(file_path, -1);
-
     uchar* imgData = img.data;
-    uchar* out_imgData;
 
+    // image dimensions
     int rows = img.rows;
     int cols = img.cols;
     int channels = img.channels();
     
+    //sizes and numbers or bytes for uchar and uchar4
     int imageSize = rows * cols * channels;
     int BYTE_SIZE = imageSize * sizeof(uchar);
-
-    for (int i = 0; i < imageSize; i++) {
-        printf("imgData[%d] = %d | ", i, imgData[i]);
-    }
-    cout << endl;
-
+    
     cout << " after : " << endl;
     int imageSize_4 = rows * cols;
+    int BYTE_SIZE_4 = imageSize_4 * sizeof(uchar4);
+    
+    //host output variable
+    uchar* out_imgData = (uchar*)malloc(imageSize_4 * sizeof(uchar));
 
-    uchar4* out = (uchar4*)malloc(imageSize_4 * sizeof(uchar4));
-
+    //input data after converting to uchar4
+    uchar4* out = (uchar4*)malloc(BYTE_SIZE_4);
     out = converting_UCHAR_UCHAR4(imgData, imageSize_4);
     DisplayUchar4(out, imageSize_4);
 
 
 
-    ////device variables
-    //uchar* di_imgData;
-    //uchar* do_imgData;
+    //device variables
+    uchar4* di_imgData;
+    uchar* do_imgData;
 
-    ////allocating memory
-    //cudaMalloc(&di_imgData, BYTE_SIZE);
-    //cudaMalloc(&do_imgData, BYTE_SIZE);
+    //allocating memory
+    cudaMalloc(&di_imgData, BYTE_SIZE_4);
+    cudaMalloc(&do_imgData, BYTE_SIZE / channels);
    
-    ////copying content
-    //cudaMemcpy(di_imgData, imgData, BYTE_SIZE, cudaMemcpyHostToDevice);
+    //copying content
+    cudaMemcpy(di_imgData, out, BYTE_SIZE_4, cudaMemcpyHostToDevice);
 
-    ////configuring kernel
-    //dim3 GrisSize(1, 1, 1);
-    //dim3 BlockSize(1, 1, 1);
-    //addKernel << <GrisSize, BlockSize >> > ();
+    //configuring kernel
+    dim3 GridSize(1,1, 1);
+    dim3 BlockSize(rows, cols, 1);
+    addKernel << <GridSize, BlockSize >> > (di_imgData, do_imgData);
 
-    ////returning the results
-    //cudaMemcpy(out_imgData, do_imgData, BYTE_SIZE, cudaMemcpyDeviceToHost);
+    //returning the results
+    cudaMemcpy(out_imgData, do_imgData, BYTE_SIZE / channels, cudaMemcpyDeviceToHost);
 
-    ////printing results
+    //printing results
     //namedWindow("color image", WINDOW_AUTOSIZE);
+    for (int i = 0; i < imageSize_4; i++) {
+        printf("out[%d] = %d \n", i, out_imgData[i]);
+    }
 
-    //// Show the image inside it.
+    // Show the image inside it.
     //imshow("color image", img);
 
 
@@ -182,7 +189,6 @@ uchar4* converting_UCHAR_UCHAR4(uchar* input ,int size_4) {
         cout << "i = " << i << ", j = "<< j << endl;
     }
 
-    
     return output;
 }
 
@@ -206,4 +212,13 @@ void DisplayUchar4(uchar4* arr,int size) {
     for (int i = 0; i < size; i++) {
         printf("arr[%d].x = %d , arr[%d].y = %d , arr[%d].z = %d \n", i, arr[i].x, i, arr[i].y, i, arr[i].z);   
     }
+}
+
+void DisplayUchar(uchar* arr, int size)
+{
+    // small display
+    for (int i = 0; i < size; i++) {
+        printf("imgData[%d] = %d | ", i, arr[i]);
+    }
+    cout << endl;
 }
