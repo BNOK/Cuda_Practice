@@ -18,21 +18,22 @@ uchar4* converting_UCHAR_UCHAR4(uchar* input, int size);
 
 void DisplayUchar4(uchar4* arr, int size);
 void DisplayUchar(uchar* arr, int size);
+Mat ucharToMat(uchar* p2, int img_width, int img_height);
 
-__global__ void addKernel(uchar4* a, uchar* b)
-{ 
-        int threadId = blockIdx.x* blockDim.x* blockDim.y
-                        + threadIdx.y * blockDim.x + threadIdx.x;
-
-        b[threadId] = a[threadId].x + a[threadId].y + a[threadId].z;
-}
+__global__ void addKernel(uchar4* a, uchar* b);
 
 int main()
 {
     //reading image and getting data 
     string file_path = "C:/Users/Mega-Pc/Desktop/git-project/Cuda_Practice/Another_Desperate_Code/Test_Image.png";
     Mat img = imread(file_path, -1);
+    
+
     uchar* imgData = img.data;
+
+    imshow("color image", img);
+
+    waitKey(0);
 
     // image dimensions
     int rows = img.rows;
@@ -53,7 +54,7 @@ int main()
     //input data after converting to uchar4
     uchar4* out = (uchar4*)malloc(BYTE_SIZE_4);
     out = converting_UCHAR_UCHAR4(imgData, imageSize_4);
-    DisplayUchar4(out, imageSize_4);
+    //DisplayUchar4(out, imageSize_4);
 
 
 
@@ -78,12 +79,14 @@ int main()
 
     //printing results
     //namedWindow("color image", WINDOW_AUTOSIZE);
-    for (int i = 0; i < imageSize_4; i++) {
+   /* for (int i = 0; i < imageSize_4; i++) {
         printf("out[%d] = %d \n", i, out_imgData[i]);
-    }
+    }*/
+       
 
     // Show the image inside it.
-    //imshow("color image", img);
+    Mat out_img = ucharToMat(out_imgData,cols,rows);
+    imshow("grey image", out_img);
 
 
 
@@ -177,6 +180,9 @@ int main()
 //    return cudaStatus;
 //}
 
+
+// converting functions HOST 
+
 uchar4* converting_UCHAR_UCHAR4(uchar* input ,int size_4) {
     uchar4* output = (uchar4*)malloc(size_4 * sizeof(uchar4));
     memset(output, 100, size_4 * sizeof(uchar4));
@@ -186,7 +192,7 @@ uchar4* converting_UCHAR_UCHAR4(uchar* input ,int size_4) {
         output[j].y = input[i+1];
         output[j].z = input[i+2];
         output[j].w = input[i+3];
-        cout << "i = " << i << ", j = "<< j << endl;
+        //cout << "i = " << i << ", j = "<< j << endl;
     }
 
     return output;
@@ -201,11 +207,23 @@ uchar* converting_UCHAR4_UCHAR(uchar4* input, int size_1) {
         output[j+1] = input[i].y;
         output[j+2] = input[i].z;
         output[j+3] = input[i].w;
-        cout << "i = " << i << ", j = " << j << endl;
+        //cout << "i = " << i << ", j = " << j << endl;
     }
 
     return output;
 }
+
+Mat ucharToMat(uchar* p2,int img_height,int img_width){
+    Mat img(Size(img_width, img_height), CV_8UC3);
+    for (int i = 0; i < img_width * img_height ; i++)
+    {
+        img.at<Vec3b>(i / (img_width ), (i % (img_width)))[i] = p2[i];
+    }
+    return img;
+}
+
+
+//Display Functions HOST
 
 void DisplayUchar4(uchar4* arr,int size) {
 
@@ -221,4 +239,15 @@ void DisplayUchar(uchar* arr, int size)
         printf("imgData[%d] = %d | ", i, arr[i]);
     }
     cout << endl;
+}
+
+
+// KERNEL FUNCTIONS DEVICE
+
+__global__ void addKernel(uchar4* a, uchar* b)
+{
+    int threadId = blockIdx.x * blockDim.x * blockDim.y
+        + threadIdx.y * blockDim.x + threadIdx.x;
+
+    b[threadId] = .299f * a[threadId].x + .587f * a[threadId].y + .114f * a[threadId].z;
 }
