@@ -18,27 +18,32 @@ uchar4* converting_UCHAR_UCHAR4(uchar* input, int size);
 
 void DisplayUchar4(uchar4* arr, int size);
 void DisplayUchar(uchar* arr, int size);
-Mat ucharToMat(uchar* p2, int img_width, int img_height);
+void ucharToMat(uchar* p2, int rows, int cols);
 
 __global__ void addKernel(uchar4* a, uchar* b);
 
 int main()
 {
     //reading image and getting data 
-    string file_path = "C:/Users/Mega-Pc/Desktop/git-project/Cuda_Practice/Another_Desperate_Code/Test_Image.png";
+    string file_path = "C:/Users/Mega-Pc/Desktop/git-project/Cuda_Practice/Another_Desperate_Code/Lena.png";
     Mat img = imread(file_path, -1);
+    Mat imageRGBA;
+    cvtColor(img, imageRGBA, COLOR_BGR2BGRA);
     
 
-    uchar* imgData = img.data;
+    uchar* imgData = imageRGBA.data;
 
-    imshow("color image", img);
+    imshow("color image", imageRGBA);
 
     waitKey(0);
 
     // image dimensions
-    int rows = img.rows;
-    int cols = img.cols;
-    int channels = img.channels();
+    int rows = imageRGBA.rows;
+    int cols = imageRGBA.cols;
+    int channels = imageRGBA.channels();
+
+    printf(" rows : %d , cols : %d , channels : %d \n", rows, cols, channels);
+
     
     //sizes and numbers or bytes for uchar and uchar4
     int imageSize = rows * cols * channels;
@@ -70,8 +75,8 @@ int main()
     cudaMemcpy(di_imgData, out, BYTE_SIZE_4, cudaMemcpyHostToDevice);
 
     //configuring kernel
-    dim3 GridSize(1,1, 1);
-    dim3 BlockSize(rows, cols, 1);
+    dim3 GridSize(16,16, 1);
+    dim3 BlockSize(rows /16, cols/16, 1);
     addKernel << <GridSize, BlockSize >> > (di_imgData, do_imgData);
 
     //returning the results
@@ -85,8 +90,9 @@ int main()
        
 
     // Show the image inside it.
-    Mat out_img = ucharToMat(out_imgData,cols,rows);
-    imshow("grey image", out_img);
+    //DisplayUchar(out_imgData, imageSize_4);
+    ucharToMat(out_imgData,rows,cols);
+    
 
 
 
@@ -94,7 +100,7 @@ int main()
     waitKey(0);
 
     // Destroys all the windows created                         
-    //destroyAllWindows();
+    destroyAllWindows();
     
 
     return 0;
@@ -213,30 +219,34 @@ uchar* converting_UCHAR4_UCHAR(uchar4* input, int size_1) {
     return output;
 }
 
-Mat ucharToMat(uchar* p2,int img_height,int img_width){
-    Mat img(Size(img_width, img_height), CV_8UC3);
-    for (int i = 0; i < img_width * img_height ; i++)
-    {
-        img.at<Vec3b>(i / (img_width ), (i % (img_width)))[i] = p2[i];
-    }
-    return img;
+void ucharToMat(uchar* p2,int rows,int cols){
+    Mat greyImg = Mat(rows, cols, CV_8U, p2);
+    string greyArrWindow = "Grey Array Image";
+    namedWindow(greyArrWindow, cv::WINDOW_AUTOSIZE);
+    imshow(greyArrWindow, greyImg);
+
+    
+
+    waitKey(0);
+    destroyAllWindows();
 }
 
 
 //Display Functions HOST
 
 void DisplayUchar4(uchar4* arr,int size) {
-
+    printf("THIS IS THE UCHAR4 DISPLAY !! \n");
     for (int i = 0; i < size; i++) {
-        printf("arr[%d].x = %d , arr[%d].y = %d , arr[%d].z = %d \n", i, arr[i].x, i, arr[i].y, i, arr[i].z);   
+        printf("arr[i].x = %d , arr[i].y = %d , arr[i].z = %d \n", arr[i].x, arr[i].y, arr[i].z);   
     }
 }
 
 void DisplayUchar(uchar* arr, int size)
 {
+    printf("THIS IS THE UCHAR DISPLAY !!\n");
     // small display
     for (int i = 0; i < size; i++) {
-        printf("imgData[%d] = %d | ", i, arr[i]);
+        printf("imgData[i] = %d | ", arr[i]);
     }
     cout << endl;
 }
@@ -246,8 +256,9 @@ void DisplayUchar(uchar* arr, int size)
 
 __global__ void addKernel(uchar4* a, uchar* b)
 {
-    int threadId = blockIdx.x * blockDim.x * blockDim.y
-        + threadIdx.y * blockDim.x + threadIdx.x;
+    int blockId = blockIdx.x + blockIdx.y * gridDim.x;
+    int threadId = blockId * (blockDim.x * blockDim.y)
+        + (threadIdx.y * blockDim.x) + threadIdx.x;
 
-    b[threadId] = .299f * a[threadId].x + .587f * a[threadId].y + .114f * a[threadId].z;
+    b[threadId] = .114f * a[threadId].x + .587f * a[threadId].y + .299f * a[threadId].z;
 }
