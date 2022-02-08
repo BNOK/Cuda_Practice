@@ -10,6 +10,12 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="Quiz.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="gputimer.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{974795CA-FEAA-4170-AA23-CA1D2FF11602}</ProjectGuid>
     <RootNamespace>DesperateCode</RootNamespace>
@@ -78,15 +84,6 @@
       <TargetMachinePlatform>64</TargetMachinePlatform>
     </CudaCompile>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <CudaCompile Include="GreyScale_CUDA.cu" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Main_GreyScale.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="H_D_Interface.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 11.5.targets" />
