@@ -79,7 +79,10 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <CudaCompile Include="Bluring_Kernels.cu" />
     <CudaCompile Include="kernel.cu" />
+    <CudaCompile Include="KernelAlgorithms.cu" />
+    <CudaCompile Include="ToneMappingKernels.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="utils.h" />
