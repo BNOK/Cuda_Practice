@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <CudaCompile Include="Kernels_Tutorials.cu" />
     <CudaCompile Include="Quiz.cu" />
   </ItemGroup>
   <ItemGroup>
