@@ -18,7 +18,7 @@ using namespace std;
 //Functions 
 
 void PreProcessing(int* h_in, int* h_out, int** d_in, int** d_out, int size);
-void FillandDisplay(int* d_in, int* d_out, int size);
+void FillandDisplaySquare(int* d_in, int* d_out, int size);
 
 //Kernels
 
@@ -32,10 +32,8 @@ int main() {
 
 	PreProcessing(inputArray, outputArray, &d_in, &d_out, ARRAY_SIZE);
 	//checking code
-	FillandDisplay(d_in, d_out, ARRAY_SIZE);
-	
-
-
+	FillandDisplaySquare(d_in, d_out, ARRAY_SIZE);
+	printf("\n OK! \n");
 
 	
 
